@@ -4,11 +4,11 @@
 [![forks](https://img.shields.io/github/forks/sebastian-gregoricchio/SPACCa?style=social)](https://github.com/sebastian-gregoricchio/SPACCa/fork)
 <!-- ![update](https://badges.pufler.dev/updated/sebastian-gregoricchio/SPACCa)
 ![visits](https://badges.pufler.dev/visits/sebastian-gregoricchio/SPACCa)
-![downloads](https://img.shields.io/github/downloads/sebastian-gregoricchio/snHiC/total.svg)--->
+![downloads](https://img.shields.io/github/downloads/sebastian-gregoricchio/SPACCa/total.svg)--->
 
 
 
-# SPACCa [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/snHiC/main/resources/SPACCa_logo.svg" align="right" height = 150/>](https://sebastian-gregoricchio.github.io/SPACCa)
+# SPACCa [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/SPACCa/main/resources/SPACCa_logo.svg" align="right" height = 150/>](https://sebastian-gregoricchio.github.io/SPACCa)
 
 ## Introduction
 `SPACCa` is a **S**nakemake **P**ipeline for the **A**nalyses of **C**hIP-seq data in **Ca**ncer samples.
