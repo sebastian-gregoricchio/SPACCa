@@ -37,7 +37,7 @@ DOI: <a href="https://doi.org/XYZ">XYZ</a>
 <br/><br/>
 
 ## Documentation [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/sebastian-gregoricchio.github.io/main/generic_resources/documentation.svg" align="right" height = 150/>](https://github.com/sebastian-gregoricchio/SPACCa/wiki)
-Details on the [installation](https://github.com/sebastian-gregoricchio/SPACCa/wiki/2.-Installation-and-dependencies) and [usage](https://github.com/sebastian-gregoricchio/SPACCa/wiki/3.-Run-the-pipeline) of `SPACCa` can be found at the dedicated [Wiki](https://github.com/sebastian-gregoricchio/SPACCa/wiki/).
+Details on the [installation](https://github.com/sebastian-gregoricchio/SPACCa/wiki/02.-Installation-and-dependencies) and [usage](https://github.com/sebastian-gregoricchio/SPACCa/wiki/05.-Peak-calling-and-normalization) of `SPACCa` can be found at the dedicated [Wiki](https://github.com/sebastian-gregoricchio/SPACCa/wiki/).
 
 <br/><br/>
 
