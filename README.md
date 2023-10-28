@@ -8,7 +8,7 @@
 
 
 
-# SPACCa [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/SPACCa/main/resources/SPACCa_logo.svg" align="right" height = 150/>](https://sebastian-gregoricchio.github.io/SPACCa)
+# SPACCa [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/SPACCa/main/resources/SPACCa_logo.svg" align="right" height = 250/>](https://sebastian-gregoricchio.github.io/SPACCa)
 *Fun fact: in italian slang when something "spacca" it means that it rocks.*
 
 <br>
