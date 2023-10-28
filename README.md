@@ -9,6 +9,8 @@
 
 
 # SPACCa [<img src="https://raw.githubusercontent.com/sebastian-gregoricchio/SPACCa/main/resources/SPACCa_logo.svg" align="right" height = 150/>](https://sebastian-gregoricchio.github.io/SPACCa)
+*Fun fact: in italian slang when something "spacca" it means that it rocks.*
+
 
 ## Introduction
 `SPACCa` is a **S**nakemake **P**ipeline for the **A**nalyses of **C**hIP-seq data in **Ca**ncer samples.
