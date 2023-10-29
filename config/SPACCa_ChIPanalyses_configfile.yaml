@@ -56,7 +56,7 @@ somatic_variants:
   QUAL_snp_threshold: 0
   DP_indel_threshold: 20
   QUAL_indel_threshold: 0
-  SnpSift_vcf_fields_to_extract: [ "CHROM", "POS", "ID", "REF", "ALT", "QUAL", "DP", "FILTER", "FORMAT", "GEN[*].GT", "GEN[*].AD" ]
+  SnpSift_vcf_fields_to_extract: [ "CHROM", "POS", "ID", "REF", "ALT", "QUAL", "DP", "AF", "FILTER", "FORMAT", "GEN[*].GT", "GEN[*].AD", "GEN[*].AF" ]
 
 
 ### 6. Copy Number Variations
