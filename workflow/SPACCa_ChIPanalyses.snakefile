@@ -592,7 +592,9 @@ rule correlations_wholeGenome_targets:
         multiBigWig_matrix_wholeGenome = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/multiBigWigSummary_matrix_wholeGenome_targets.npz"
     output:
         correlation_heatmap_wholeGenome_pearson = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_targets.pdf",
-        correlation_heatmap_wholeGenome_spearman = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_targets.pdf"
+        correlation_heatmap_wholeGenome_spearman = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_targets.pdf",
+        correlation_heatmap_wholeGenome_pearson_matrix = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_targets_matrix.txt",
+        correlation_heatmap_wholeGenome_spearman_matrix = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_targets_matrix.txt"
     params:
         labels = ' '.join(TARGETNAMES),
         blacklist = blacklist,
@@ -618,8 +620,11 @@ rule correlations_wholeGenome_targets:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Pearson correlation whole genome RPGC normalized coverage (TARGETS)' \
         --plotFile {output.correlation_heatmap_wholeGenome_pearson} \
+        --outFileCorMatrix {output.correlation_heatmap_wholeGenome_pearson_matrix} \
         --colorMap {params.heatmap_color} > {log.out_pearson} 2> {log.err_pearson}
 
 
@@ -631,8 +636,11 @@ rule correlations_wholeGenome_targets:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Spearman correlation whole genome RPGC normalized coverage (TARGETS)' \
         --plotFile {output.correlation_heatmap_wholeGenome_spearman} \
+        --outFileCorMatrix {output.correlation_heatmap_wholeGenome_spearman_matrix} \
         --colorMap {params.heatmap_color} > {log.out_spearman} 2> {log.err_spearman}
         """
 
@@ -717,7 +725,9 @@ rule correlations_wholeGenome_inputs:
         multiBigWig_matrix_wholeGenome = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/multiBigWigSummary_matrix_wholeGenome_inputs.npz"
     output:
         correlation_heatmap_wholeGenome_pearson = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_inputs.pdf",
-        correlation_heatmap_wholeGenome_spearman = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_inputs.pdf"
+        correlation_heatmap_wholeGenome_spearman = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_inputs.pdf",
+        correlation_heatmap_wholeGenome_pearson_matrix = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_inputs_matrix.txt",
+        correlation_heatmap_wholeGenome_spearman_matrix = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_inputs_matrix.txt"
     params:
         labels = ' '.join(INPUTNAMES),
         blacklist = blacklist,
@@ -743,8 +753,11 @@ rule correlations_wholeGenome_inputs:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Pearson correlation whole genome RPGC normalized coverage (INPUTS)' \
         --plotFile {output.correlation_heatmap_wholeGenome_pearson} \
+        --outFileCorMatrix {output.correlation_heatmap_wholeGenome_pearson_matrix} \
         --colorMap {params.heatmap_color} > {log.out_pearson} 2> {log.err_pearson}
 
 
@@ -756,8 +769,11 @@ rule correlations_wholeGenome_inputs:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Spearman correlation whole genome RPGC normalized coverage (INPUTS)' \
         --plotFile {output.correlation_heatmap_wholeGenome_spearman} \
+        --outFileCorMatrix {output.correlation_heatmap_wholeGenome_spearman_matrix} \
         --colorMap {params.heatmap_color} > {log.out_spearman} 2> {log.err_spearman}
         """
 
@@ -1132,7 +1148,9 @@ rule correlations_atPeaks:
         multiBigWig_matrix_atPeaks = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/multiBigWigSummary_matrix_atPeaks.npz"
     output:
         correlation_heatmap_atPeaks_pearson = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/sample_pearson.correlation_heatmap_atPeaks.pdf",
-        correlation_heatmap_atPeaks_spearman = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/sample_spearman.correlation_heatmap_atPeaks.pdf"
+        correlation_heatmap_atPeaks_spearman = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/sample_spearman.correlation_heatmap_atPeaks.pdf",
+        correlation_heatmap_atPeaks_pearson_matrix = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/sample_pearson.correlation_heatmap_atPeaks_matrix.txt",
+        correlation_heatmap_atPeaks_spearman_matrix = "05_Quality_controls_and_statistics/sample_comparisons_atPeaks/sample_spearman.correlation_heatmap_atPeaks_matrix.txt"
     params:
         labels = ' '.join(TARGETNAMES),
         blacklist = blacklist,
@@ -1158,8 +1176,11 @@ rule correlations_atPeaks:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Pearson correlation at peaks RPGC normalized coverage' \
         --plotFile {output.correlation_heatmap_atPeaks_pearson} \
+        --outFileCorMatrix {output.correlation_heatmap_atPeaks_pearson_matrix} \
         --colorMap {params.heatmap_color} > {log.out_pearson} 2> {log.err_pearson}
 
 
@@ -1171,8 +1192,11 @@ rule correlations_atPeaks:
         --skipZeros \
         --plotNumbers \
         --removeOutliers \
+        --zMin 0 \
+        --zMax 1 \
         --plotTitle 'Spearman correlation at peaks RPGC normalized coverage' \
         --plotFile {output.correlation_heatmap_atPeaks_spearman} \
+        --outFileCorMatrix {output.correlation_heatmap_atPeaks_spearman_matrix} \
         --colorMap {params.heatmap_color} > {log.out_spearman} 2> {log.err_spearman}
         """
 
@@ -1737,7 +1761,7 @@ rule GATK_call_SNPs:
 
 
 # Filter SNPs
-rule GATK_filter_SNPs:
+rule SnpSift_filter_SNPs:
     input:
         snp_vcf = os.path.join(GATKDIR, ''.join(["VCF/SNP/{TARGET}_", DUP, "_gatk-snp.vcf"]))
     output:
@@ -1749,7 +1773,7 @@ rule GATK_filter_SNPs:
     threads:
         max(math.floor(workflow.cores/len(TARGETNAMES)), 1)
     benchmark:
-        "benchmarks/GATK_filter_SNPs/GATK_filter_SNPs---{TARGET}_benchmark.txt"
+        "benchmarks/SnpSift_filter_SNPs/SnpSift_filter_SNPs---{TARGET}_benchmark.txt"
     shell:
         """
         printf '\033[1;36m{params.sample}: SnpSift SNP filtering...\\n\033[0m'
@@ -1873,7 +1897,7 @@ rule GATK_plot_SNPs:
             occurences.append(len(tb[tb["sample_ID"] == s].index))
 
         occurences_tb = pd.DataFrame({'Sample':np.flip(params.sample), 'SNP.counts':occurences})
-        plot = occurences_tb.plot.barh(x='Sample', y='SNP.counts', title = params.plot_title)
+        plot = occurences_tb.plot.barh(x='Sample', y='SNP.counts', title = params.plot_title, legend=False, xlabel = "SNP count")
         plot.figure.savefig(output.snp_plot, bbox_inches='tight')
 
 
@@ -1916,7 +1940,7 @@ rule GATK_call_InDels:
 
 
 # Filter InDels
-rule GATK_filter_InDels:
+rule SnpSift_filter_InDels:
     input:
         indel_vcf = os.path.join(GATKDIR, ''.join(["VCF/InDel/{TARGET}_", DUP, "_gatk-indel.vcf"]))
     output:
@@ -1930,7 +1954,7 @@ rule GATK_filter_InDels:
     log:
         out = os.path.join(GATKDIR, "VCF/InDel/logs/{TARGET}_filter_InDels.log")
     benchmark:
-        "benchmarks/GATK_filter_InDels/GATK_filter_InDels---{TARGET}_benchmark.txt"
+        "benchmarks/SnpSift_filter_InDels/SnpSift_filter_InDels---{TARGET}_benchmark.txt"
     shell:
         """
         printf '\033[1;36m{params.sample}: SnpSift InDel filtering...\\n\033[0m'
@@ -2055,7 +2079,7 @@ rule GATK_plot_InDels:
             occurences.append(len(tb[tb["sample_ID"] == s].index))
 
         occurences_tb = pd.DataFrame({'Sample':np.flip(params.sample), 'InDel.counts':occurences})
-        plot = occurences_tb.plot.barh(x='Sample', y='InDel.counts', title = params.plot_title)
+        plot = occurences_tb.plot.barh(x='Sample', y='InDel.counts', title = params.plot_title, legend=False, xlabel = "InDel count")
         plot.figure.savefig(output.indel_plot, bbox_inches='tight')
 
 
