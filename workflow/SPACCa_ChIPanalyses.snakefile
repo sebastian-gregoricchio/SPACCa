@@ -393,7 +393,9 @@ rule fastQC_filtered_BAM:
 rule plotFingerprint:
     input:
         target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
-        target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"]))
+        target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
+        input_bam = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])), input=INPUTNAMES),
+        input_bai = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])), input=INPUTNAMES)
     output:
         lorenz_curve_pdf = os.path.join("05_Quality_controls_and_statistics/plotFingerprint/{TARGET}_fingerPrinting_plot.pdf"),
         quality_metrics = os.path.join("05_Quality_controls_and_statistics/plotFingerprint/quality_metrics/{TARGET}_fingerPrinting_quality_metrics.txt")
@@ -1416,7 +1418,7 @@ else:
 # Create 2bit genome
 rule convert_genome_to_2bit:
     input:
-        genome = genome_fasta
+        genome = ancient(genome_fasta)
     output:
         genome_2bit = ''.join([re.sub("[.]([a-z]|[A-Z])*$", "",genome_fasta),'.2bit'])
     benchmark:
