@@ -88,8 +88,12 @@ else:
     fragmentSizeDistribution_results = []
 
 if (len(SAMPLENAMES) > 2):
-    PCA_wholeGenome_12 = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.1-2_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
-    PCA_wholeGenome_23 = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.2-3_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+    if (len(INPUTNAMES) > 2):
+        PCA_wholeGenome_12 = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.1-2_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+        PCA_wholeGenome_23 = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.2-3_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+    else:
+        PCA_wholeGenome_12 = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.1-2_heatmap_wholeGenome_targets.pdf"
+        PCA_wholeGenome_23 = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_correlation_PCA.2-3_heatmap_wholeGenome_targets.pdf"
 else:
     PCA_wholeGenome_12 = []
     PCA_wholeGenome_23 = []
@@ -104,8 +108,12 @@ else:
 
 
 if (len(SAMPLENAMES) > 1):
-    correlation_heatmap_wholeGenome_pearson = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
-    correlation_heatmap_wholeGenome_spearman = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+    if (len(INPUTNAMES) > 2):
+        correlation_heatmap_wholeGenome_pearson = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+        correlation_heatmap_wholeGenome_spearman = expand("05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_{ip}.pdf", ip = ["targets", "inputs"])
+    else:
+        correlation_heatmap_wholeGenome_pearson = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_pearson.correlation_heatmap_wholeGenome_targets.pdf"
+        correlation_heatmap_wholeGenome_spearman = "05_Quality_controls_and_statistics/sample_comparisons_wholeGenome/sample_spearman.correlation_heatmap_wholeGenome_targets.pdf"
 else:
     correlation_heatmap_wholeGenome_pearson = []
     correlation_heatmap_wholeGenome_spearman = []
