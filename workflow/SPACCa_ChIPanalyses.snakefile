@@ -334,7 +334,7 @@ if (eval(str(config["bam_features"]["skip_bam_filtering"])) == False):
                 mkdir -p 01_BAM_filtered/MarkDuplicates_logs
                 mkdir -p 01_BAM_filtered/flagstat
 
-                $CONDA_PREFIX/bin/gatk MarkDuplicatesWithMateCigar \
+                $CONDA_PREFIX/bin/gatk MarkDuplicates \
                 --INPUT {input.bam_mapq_only_sorted} \
                 --OUTPUT {output.bam_mdup} \
                 --REMOVE_DUPLICATES {params.remove_duplicates} \
