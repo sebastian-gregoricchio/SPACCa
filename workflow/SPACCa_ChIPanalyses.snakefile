@@ -515,7 +515,8 @@ rule normalized_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        --ignoreDuplicates \
+        #--ignoreDuplicates \
+	--samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -556,7 +557,8 @@ rule raw_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        --ignoreDuplicates \
+        #--ignoreDuplicates \
+	--samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -1554,7 +1556,8 @@ rule GCcorrected_normalized_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        --ignoreDuplicates \
+        #--ignoreDuplicates \
+	--samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
