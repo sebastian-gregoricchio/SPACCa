@@ -964,6 +964,12 @@ else:
                 BROAD="--broad"
             fi
 
+            EXTSIZEPHANTOM=$(cat {input.phantom}) ${{BROAD}}
+
+            if [ "$EXTSIZEPHANTOM" -lt 1 ]; then
+              EXTSIZEPHANTOM=200
+            fi
+
             $CONDA_PREFIX/bin/{params.macs_version} callpeak \
             -t {input.target_bam} \
             -c 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
@@ -973,7 +979,7 @@ else:
             -q {params.macs_qValue_cutoff} \
             --outdir 04_Called_peaks \
             --name {params.sample}.filtered.BAM \
-            --extsize $(cat {input.phantom}) ${{BROAD}} > {log.err} 2> {log.out}
+            --extsize $EXTSIZEPHANTOM > {log.err} 2> {log.out}
             """
 
 # ------------------------------------------------------------------------------
