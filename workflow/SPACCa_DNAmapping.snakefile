@@ -377,7 +377,7 @@ else: # Single-end/no-UMI dedup
             mkdir -p 02_BAM/MarkDuplicates_logs
             mkdir -p 02_BAM/flagstat
 
-            $CONDA_PREFIX/bin/gatk MarkDuplicatesWithMateCigar \
+            $CONDA_PREFIX/bin/gatk MarkDuplicates \
             --INPUT {input.bam_mapq_only_sorted} \
             --OUTPUT {output.bam_mdup} \
             --REMOVE_DUPLICATES {params.remove_duplicates} \
