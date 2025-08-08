@@ -435,7 +435,8 @@ rule plotFingerprint:
         --JSDsample 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
         -plot {output.lorenz_curve_pdf} \
         {params.read_extension} \
-        --ignoreDuplicates \
+        #--ignoreDuplicates \
+        --samFlagExclude 1024 \
         --outQualityMetrics {output.quality_metrics} \
         --labels {params.sample} ${{INPUT_ID}} \
         --blackListFileName {params.blacklist} \
@@ -516,7 +517,7 @@ rule normalized_bigWig:
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
         #--ignoreDuplicates \
-	--samFlagExclude 1024 \
+	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -558,7 +559,7 @@ rule raw_bigWig:
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
         #--ignoreDuplicates \
-	--samFlagExclude 1024 \
+	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -1557,7 +1558,7 @@ rule GCcorrected_normalized_bigWig:
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
         #--ignoreDuplicates \
-	--samFlagExclude 1024 \
+	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -2464,3 +2465,4 @@ rule correct_CNV_GCbias_corrected_bigWigs:
 # ------------------------------------------------------------------------------
 #                                 END pipeline
 # ------------------------------------------------------------------------------
+
