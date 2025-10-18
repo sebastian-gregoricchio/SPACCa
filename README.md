@@ -1,6 +1,7 @@
 [![Snakemake](https://img.shields.io/badge/snakemake-≥7.24.0-brightgreen.svg)](https://snakemake.github.io)
 ![release](https://img.shields.io/github/v/release/sebastian-gregoricchio/SPACCa)
 [![license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://sebastian-gregoricchio.github.io/SPACCa/LICENSE.md/LICENSE)
+[![DOI-Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.15309654.svg)](https://doi.org/10.5281/zenodo.15309654)
 [![forks](https://img.shields.io/github/forks/sebastian-gregoricchio/SPACCa?style=social)](https://github.com/sebastian-gregoricchio/SPACCa/fork)
 <!-- ![update](https://badges.pufler.dev/updated/sebastian-gregoricchio/SPACCa)
 ![visits](https://badges.pufler.dev/visits/sebastian-gregoricchio/SPACCa)
