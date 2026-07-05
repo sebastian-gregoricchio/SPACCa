@@ -10,6 +10,7 @@ title: "changeLog"
 * Minor bug fixing for handling sample names in peak calling rule.
 * Manual update.
 
+<br>
 
 #### [v0.1.0](https://github.com/sebastian-gregoricchio/SPACCa/releases/tag/0.1.0) - April 30<sup>th</sup> 2025
 * First release (some manuals are still missing but the workflow is functional).
