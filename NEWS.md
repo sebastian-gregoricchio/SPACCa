@@ -6,6 +6,11 @@ title: "changeLog"
 [![forks](https://img.shields.io/github/forks/sebastian-gregoricchio/SPACCa?style=social)](https://github.com/sebastian-gregoricchio/SPACCa/fork)
 
 
+#### [v0.1.2](https://github.com/sebastian-gregoricchio/SPACCa/releases/tag/0.1.2) - July 5<sup>th</sup> 2026
+* The analyses snakefile now allos for samples without input/control sample.
+
+<br>
+
 #### [v0.1.1](https://github.com/sebastian-gregoricchio/SPACCa/releases/tag/0.1.1) - July 5<sup>th</sup> 2026
 * Minor bug fixing for handling sample names in peak calling rule.
 * Manual update.
