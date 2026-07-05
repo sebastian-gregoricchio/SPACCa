@@ -48,8 +48,29 @@ workdir: home_dir
 sample_metadata = pd.read_csv(str(config["workflow_configuration"]["sample_config_table"]),  sep='\t+', engine='python')   # target_id | input_id | broad
 #sample_metadata = sample_metadata.iloc[:,0:3].set_axis(['target_id', 'input_id', 'broad'], axis=1, inplace=False)
 sample_metadata = sample_metadata.iloc[:,0:3].set_axis(['target_id', 'input_id', 'broad'], axis=1, copy=False)
+
+# A ChIP target can be called WITHOUT an input/control. This is triggered by
+# setting the input_id to 'none' (case-insensitive) in the sample config table.
+# These placeholder inputs must NOT be treated as real samples anywhere in the
+# pipeline (no BAM filtering, no bigWig, no correlations, no peak-calling control).
+def _is_no_input(value):
+    return str(value).strip().lower() == "none"
+
+# strip surrounding whitespace from the id columns (robustness)
+sample_metadata["target_id"] = sample_metadata["target_id"].astype(str).str.strip()
+sample_metadata["input_id"]  = sample_metadata["input_id"].astype(str).str.strip()
+
+# map every target to its (normalized) input id; None means "no input / none"
+def input_id_of(target):
+    sub = sample_metadata.loc[sample_metadata.target_id == target, "input_id"]
+    if len(sub) == 0:
+        return None
+    value = str(sub.iloc[0])
+    return None if _is_no_input(value) else value
+
 TARGETNAMES = list(numpy.unique(list(sample_metadata.target_id)))
-INPUTNAMES = list(numpy.unique(list(sample_metadata.input_id)))
+# real inputs only: the 'none' placeholder is excluded from every sample list
+INPUTNAMES = list(numpy.unique([str(i) for i in sample_metadata.input_id if not _is_no_input(i)]))
 SAMPLENAMES = list(numpy.unique(TARGETNAMES + INPUTNAMES))
 
 
@@ -73,6 +94,22 @@ if ((eval(str(config["bam_features"]["remove_duplicates"])) == True)):
     DUP = "dedup"
 else:
     DUP = "mdup"
+
+
+### Reusable path fragments and input-functions for the (optional) input/control.
+### control_bam / control_bai return the BAM/BAI of a target's input, or an empty
+### list when the target has no input ('none'), so the rule simply gains no control
+### dependency in that case.
+FILTERED_BAM_SUFFIX = "_mapq" + str(config["bam_features"]["MAPQ_threshold"]) + "_" + DUP + "_sorted.bam"
+FILTERED_BAI_SUFFIX = "_mapq" + str(config["bam_features"]["MAPQ_threshold"]) + "_" + DUP + "_sorted.bai"
+
+def control_bam(wildcards):
+    inp = input_id_of(wildcards.TARGET)
+    return [] if inp is None else os.path.join("01_BAM_filtered", inp + FILTERED_BAM_SUFFIX)
+
+def control_bai(wildcards):
+    inp = input_id_of(wildcards.TARGET)
+    return [] if inp is None else os.path.join("01_BAM_filtered", inp + FILTERED_BAI_SUFFIX)
 
 
 
@@ -190,7 +227,7 @@ def constraint_to(values: List[str]) -> str:
 wildcard_constraints:
     SAMPLE = constraint_to(SAMPLENAMES),
     TARGET = constraint_to(TARGETNAMES),
-    INPUT = constraint_to(INPUTNAMES)
+    INPUT = constraint_to(INPUTNAMES if len(INPUTNAMES) > 0 else ["__no_input__"])
 
 
 ruleorder: fastQC_filtered_BAM > normalized_bigWig > raw_bigWig
@@ -402,8 +439,8 @@ rule plotFingerprint:
     input:
         target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
         target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-        input_bam = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])), input=INPUTNAMES),
-        input_bai = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])), input=INPUTNAMES)
+        input_bam = control_bam,
+        input_bai = control_bai
     output:
         lorenz_curve_pdf = os.path.join("05_Quality_controls_and_statistics/plotFingerprint/{TARGET}_fingerPrinting_plot.pdf"),
         quality_metrics = os.path.join("05_Quality_controls_and_statistics/plotFingerprint/quality_metrics/{TARGET}_fingerPrinting_quality_metrics.txt")
@@ -427,18 +464,28 @@ rule plotFingerprint:
         mkdir -p 05_Quality_controls_and_statistics/plotFingerprint/logs
         mkdir -p 05_Quality_controls_and_statistics/plotFingerprint/quality_metrics
 
-        INPUT_ID=$(grep -w {params.sample} {params.sample_config_table} | cut -f 2)
+        INPUT_ID=$(awk -v s="{params.sample}" '$1==s {{print $2; exit}}' {params.sample_config_table})
+        INPUT_LC=$(printf '%s' "$INPUT_ID" | tr '[:upper:]' '[:lower:]')
+
+        if [ -z "$INPUT_ID" ] || [ "$INPUT_LC" == "none" ]; then
+            printf '\033[1;33m{params.sample}: no input provided, plotting fingerprint for the target only...\\n\033[0m'
+            BAM_FILES="{input.target_bam}"
+            JSD_ARG=""
+            LABELS="{params.sample}"
+        else
+            BAM_FILES="{input.target_bam} 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}"
+            JSD_ARG="--JSDsample 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}"
+            LABELS="{params.sample} ${{INPUT_ID}}"
+        fi
 
         $CONDA_PREFIX/bin/plotFingerprint \
-        -b {input.target_bam} \
-        01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
-        --JSDsample 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
+        -b ${{BAM_FILES}} \
+        ${{JSD_ARG}} \
         -plot {output.lorenz_curve_pdf} \
         {params.read_extension} \
-        #--ignoreDuplicates \
         --samFlagExclude 1024 \
         --outQualityMetrics {output.quality_metrics} \
-        --labels {params.sample} ${{INPUT_ID}} \
+        --labels ${{LABELS}} \
         --blackListFileName {params.blacklist} \
         -p {threads} > {log.out} 2> {log.err}
         """
@@ -516,7 +563,6 @@ rule normalized_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        #--ignoreDuplicates \
 	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
@@ -558,7 +604,6 @@ rule raw_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        #--ignoreDuplicates \
 	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
@@ -838,7 +883,7 @@ if ((eval(str(config["bam_features"]["paired_end"])) == True)):
         input:
             target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
             target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-            input_bam_all = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])), input = INPUTNAMES),
+            control_bam = control_bam
         output:
             peaksPE = "04_Called_peaks/{TARGET}.filtered.BAMPE_peaks.xls"
         params:
@@ -863,8 +908,9 @@ if ((eval(str(config["bam_features"]["paired_end"])) == True)):
 
             mkdir -p 04_Called_peaks/logs
 
-            INPUT_ID=$(grep -w {params.sample} {params.sample_config_table} | cut -f 2)
-            CALL_BROAD=$(grep -w {params.sample} {params.sample_config_table} | cut -f 3 | sed -e 's/\\(.*\\)/\\L\\1/')
+            INPUT_ID=$(awk -v s="{params.sample}" '$1==s {{print $2; exit}}' {params.sample_config_table})
+            INPUT_LC=$(printf '%s' "$INPUT_ID" | tr '[:upper:]' '[:lower:]')
+            CALL_BROAD=$(awk -v s="{params.sample}" '$1==s {{print $3; exit}}' {params.sample_config_table} | sed -e 's/\\(.*\\)/\\L\\1/')
 
             if [ $CALL_BROAD == "false" ]; then
                 BROAD=""
@@ -872,9 +918,17 @@ if ((eval(str(config["bam_features"]["paired_end"])) == True)):
                 BROAD="--broad"
             fi
 
+            # build the control (-c) argument; drop it entirely when input is 'none'
+            if [ -z "$INPUT_ID" ] || [ "$INPUT_LC" == "none" ]; then
+                CONTROL=""
+                printf '\033[1;33m{params.sample}: calling peaks WITHOUT input control...\\n\033[0m'
+            else
+                CONTROL="-c 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}"
+            fi
+
             $CONDA_PREFIX/bin/{params.macs_version} callpeak \
             -t {input.target_bam} \
-            -c 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
+            ${{CONTROL}} \
             -f BAMPE \
             -g {params.genomeSize} \
             -q {params.macs_qValue_cutoff} \
@@ -887,7 +941,7 @@ else:
         input:
             target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
             target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-            input_bam_all = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])), input = INPUTNAMES)
+            control_bam = control_bam
         output:
             phantom = '04_Called_peaks/phantom/{TARGET}.phantom.spp.out'
         params:
@@ -908,9 +962,18 @@ else:
             printf '\033[1;36m{params.sample}: calculating phantom peak...\\n\033[0m'
             mkdir -p 04_Called_peaks/phantom/logs
 
-            INPUT_ID=$(grep -w {params.sample} {params.sample_config_table} | cut -f 2)
+            INPUT_ID=$(awk -v s="{params.sample}" '$1==s {{print $2; exit}}' {params.sample_config_table})
+            INPUT_LC=$(printf '%s' "$INPUT_ID" | tr '[:upper:]' '[:lower:]')
 
-            ${{CONDA_PREFIX}}/bin/Rscript ${{CONDA_PREFIX}}/bin/run_spp.R -rf -c='{input.target_bam}' -i="01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}" -savp -out={output.phantom} &> {log.out}
+            # drop the -i control argument when the target has no input ('none')
+            if [ -z "$INPUT_ID" ] || [ "$INPUT_LC" == "none" ]; then
+                INPUT_ARG=""
+                printf '\033[1;33m{params.sample}: estimating fragment length WITHOUT input control...\\n\033[0m'
+            else
+                INPUT_ARG="-i=01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}"
+            fi
+
+            ${{CONDA_PREFIX}}/bin/Rscript ${{CONDA_PREFIX}}/bin/run_spp.R -rf -c='{input.target_bam}' ${{INPUT_ARG}} -savp -out={output.phantom} &> {log.out}
             """
 
 
@@ -933,7 +996,7 @@ else:
         input:
             target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
             target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-            input_bam_all = expand(os.path.join("01_BAM_filtered", ''.join(["{input}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])), input = INPUTNAMES),
+            control_bam = control_bam,
             phantom = '04_Called_peaks/phantom/{TARGET}.fragment_length'
         output:
             peaksSE = "04_Called_peaks/{TARGET}.filtered.BAM_peaks.xls"
@@ -958,8 +1021,9 @@ else:
 
             mkdir -p 04_Called_peaks/logs
 
-            INPUT_ID=$(grep -w {params.sample} {params.sample_config_table} | cut -f 2)
-            CALL_BROAD=$(grep -w {params.sample} {params.sample_config_table} | cut -f 3 | sed -e 's/\\(.*\\)/\\L\\1/')
+            INPUT_ID=$(awk -v s="{params.sample}" '$1==s {{print $2; exit}}' {params.sample_config_table})
+            INPUT_LC=$(printf '%s' "$INPUT_ID" | tr '[:upper:]' '[:lower:]')
+            CALL_BROAD=$(awk -v s="{params.sample}" '$1==s {{print $3; exit}}' {params.sample_config_table} | sed -e 's/\\(.*\\)/\\L\\1/')
 
             if [ $CALL_BROAD == "false" ]; then
                 BROAD=""
@@ -967,7 +1031,15 @@ else:
                 BROAD="--broad"
             fi
 
-            EXTSIZEPHANTOM=$(cat {input.phantom}) ${{BROAD}}
+            # build the control (-c) argument; drop it entirely when input is 'none'
+            if [ -z "$INPUT_ID" ] || [ "$INPUT_LC" == "none" ]; then
+                CONTROL=""
+                printf '\033[1;33m{params.sample}: calling peaks WITHOUT input control...\\n\033[0m'
+            else
+                CONTROL="-c 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix}"
+            fi
+
+            EXTSIZEPHANTOM=$(cat {input.phantom})
 
             if [ "$EXTSIZEPHANTOM" -lt 1 ]; then
               EXTSIZEPHANTOM=200
@@ -975,14 +1047,14 @@ else:
 
             $CONDA_PREFIX/bin/{params.macs_version} callpeak \
             -t {input.target_bam} \
-            -c 01_BAM_filtered/${{INPUT_ID}}{params.input_suffix} \
+            ${{CONTROL}} \
             -f BAM \
             -g {params.genomeSize} \
             --nomodel \
             -q {params.macs_qValue_cutoff} \
             --outdir 04_Called_peaks \
             --name {params.sample}.filtered.BAM \
-            --extsize $EXTSIZEPHANTOM > {log.err} 2> {log.out}
+            --extsize $EXTSIZEPHANTOM ${{BROAD}} > {log.err} 2> {log.out}
             """
 
 # ------------------------------------------------------------------------------
@@ -1557,7 +1629,6 @@ rule GCcorrected_normalized_bigWig:
         --effectiveGenomeSize {params.genomeSize} \
         --ignoreForNormalization {params.ignore_for_normalization} \
         --blackListFileName {params.blacklist} \
-        #--ignoreDuplicates \
 	    --samFlagExclude 1024 \
         {params.read_extension} \
         -p {threads} > {log.out} 2> {log.err}
