@@ -2394,7 +2394,8 @@ rule convert_CNA_to_bedGraph:
         bedGraph_filtered = temp(os.path.join(COPYWRITERDIR, ''.join(["{TARGET}/CNAprofiles/{TARGET}_filtered.abs.", str(config["copy_number_variation"]["CNA_threshold"]), "_linear_CNAcounts.bedGraph"])))
     params:
         sample = "{TARGET}",
-        CNA_threshold = int(config["copy_number_variation"]["CNA_threshold"])
+        CNA_threshold = float(config["copy_number_variation"]["CNA_threshold"]),
+        ploidy = float(config["copy_number_variation"].get("ploidy", 2))
     threads: 1
     benchmark:
         "benchmarks/convert_CNA_to_bedGraph/convert_CNA_to_bedGraph---{TARGET}_benchmark.txt"
@@ -2402,11 +2403,19 @@ rule convert_CNA_to_bedGraph:
         shell("printf '\033[1;36m {params.sample}: Filter and converting CNA counts to bedGraph...\\n\033[0m'")
 
         counts = pd.read_csv(input.log2_read_counts,  sep='\t+', engine='python', skiprows=1)
-        counts.iloc[:,4] = 2**counts.iloc[:,4]
 
-        bdg = counts.iloc[:,[0,1,2,4]]
-        bdg_filt = bdg[abs(bdg.iloc[:,3]) >= params.CNA_threshold]
-        bdg_filt.to_csv(output.bedGraph_filtered, header=False, index=False, sep='\t')
+        # log2 ratio (relative to the sample baseline) -> integer copy number (round half up) -> linear ratio
+        copy_number = numpy.floor(params.ploidy * 2**counts.iloc[:,4] + 0.5)
+        ratio = copy_number / params.ploidy
+
+        # Correct gains AND losses beyond the threshold; never CN = 0 (cannot divide by 0)
+        keep = ((ratio >= params.CNA_threshold) | (ratio <= 1 / params.CNA_threshold)) & (copy_number > 0)
+
+        # Store (ratio - 1): bigwigCompare adds a pseudocount of 1 to this track, so the
+        # signal is divided by the ratio in CNA regions and by 1 everywhere else
+        bdg = counts.iloc[:,[0,1,2]].copy()
+        bdg["correction"] = ratio - 1
+        bdg[keep].to_csv(output.bedGraph_filtered, header=False, index=False, sep='\t')
 
 
 
@@ -2472,6 +2481,7 @@ rule correct_CNV_normalized_bigWigs:
 
             $CONDA_PREFIX/bin/bedGraphToBigWig {output.sorted_bedGraph} {input.chrSizes} {params.bigWig_filtered} &> {log.bedGraphToBigWig_out}
 
+            # signal / (track + 1): the track stores (copy ratio - 1) in CNA bins and is empty (= 0) elsewhere
             $CONDA_PREFIX/bin/bigwigCompare \
             --bigwig1 {input.normalized_bigWig} \
             --bigwig2 {params.bigWig_filtered} \
@@ -2517,6 +2527,7 @@ rule correct_CNV_GCbias_corrected_bigWigs:
 
             #$CONDA_PREFIX/bin/bedGraphToBigWig {input.sorted_bedGraph} {input.chrSizes} {params.bigWig_filtered} &> {log.bedGraphToBigWig_out}
 
+            # signal / (track + 1): the track stores (copy ratio - 1) in CNA bins and is empty (= 0) elsewhere
             $CONDA_PREFIX/bin/bigwigCompare \
             --bigwig1 {input.normalized_bigWig} \
             --bigwig2 {params.bigWig_filtered} \

@@ -64,6 +64,7 @@ copy_number_variation:
   call_CNV: True
   kb_bin_resolution: 20
   CNA_threshold: 2
+  ploidy: 2 # copy number of the sample baseline (2 = diploid); CNAs are rounded to integer copy numbers
   CNA_plot_line_colors: "red"
   CNA_plot_point_size: 0.5
   CNA_plot_point_transparency: 0.5
