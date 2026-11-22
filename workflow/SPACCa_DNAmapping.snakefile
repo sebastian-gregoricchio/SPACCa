@@ -295,7 +295,8 @@ rule MAPQ_filter:
         bam_mapq_only_sorted_index = temp(os.path.join("02_BAM", ''.join(["{SAMPLE}_mapq", str(config["MAPQ_threshold"]), "_sorted.bam.bai"])))
     params:
         sample = "{SAMPLE}",
-        MAPQ_threshold = config["MAPQ_threshold"]
+        MAPQ_threshold = config["MAPQ_threshold"],
+        paired_end = str(paired)
     threads:
         max(math.floor(workflow.cores/len(SAMPLENAMES)), 1)
     shell:
@@ -304,7 +305,21 @@ rule MAPQ_filter:
 
         $CONDA_PREFIX/bin/samtools view -@ {threads} -h -q {params.MAPQ_threshold} {input.source_bam} -o {output.bam_mapq_only}
 
-        $CONDA_PREFIX/bin/samtools sort -@ {threads} {output.bam_mapq_only} -o {output.bam_mapq_only_sorted}
+        if [[ "{params.paired_end}" == "True" ]]; then
+            # Paired-end: the MAPQ filter acts on single reads: when only one mate is removed, the other one stays as an
+            # orphan that still carries the old proper-pair flag and TLEN (R1 and R2 counts differ, MACS BAMPE and
+            # bamCoverage --extendReads treat the orphan as a full fragment). Mates are re-paired (collate + fixmate)
+            # and only proper pairs are kept. -F 2828 = unmapped, mate unmapped, secondary, QC-fail, supplementary.
+            # Streamed: no intermediate BAM is written (samtools temporary chunks are removed).
+            printf '\033[1;36m{params.sample}: keeping complete read pairs only...\\n\033[0m'
+            $CONDA_PREFIX/bin/samtools collate -@ {threads} -O -u {output.bam_mapq_only} 02_BAM/{params.sample}_collate_tmp | \
+            $CONDA_PREFIX/bin/samtools fixmate -@ {threads} -m -u - - | \
+            $CONDA_PREFIX/bin/samtools view -@ {threads} -u -f 2 -F 2828 - | \
+            $CONDA_PREFIX/bin/samtools sort -@ {threads} -T 02_BAM/{params.sample}_sort_tmp -o {output.bam_mapq_only_sorted} -
+            rm -f 02_BAM/{params.sample}_collate_tmp* 02_BAM/{params.sample}_sort_tmp*
+        else
+            $CONDA_PREFIX/bin/samtools sort -@ {threads} {output.bam_mapq_only} -o {output.bam_mapq_only_sorted}
+        fi
         $CONDA_PREFIX/bin/samtools index -@ {threads} -b {output.bam_mapq_only_sorted} {output.bam_mapq_only_sorted_index}
         """
 

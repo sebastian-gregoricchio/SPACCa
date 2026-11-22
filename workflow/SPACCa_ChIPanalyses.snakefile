@@ -283,7 +283,8 @@ if (eval(str(config["bam_features"]["skip_bam_filtering"])) == False):
             bam_mapq_only_sorted_index = temp(os.path.join("01_BAM_filtered", ''.join(["{SAMPLE}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_sorted.bam.bai"])))
         params:
             sample = "{SAMPLE}",
-            MAPQ_threshold = config["bam_features"]["MAPQ_threshold"]
+            MAPQ_threshold = config["bam_features"]["MAPQ_threshold"],
+            paired_end = str(eval(str(config["bam_features"]["paired_end"])) == True)
         threads:
             max(math.floor(workflow.cores/len(SAMPLENAMES)), 1)
         benchmark:
@@ -294,7 +295,21 @@ if (eval(str(config["bam_features"]["skip_bam_filtering"])) == False):
 
             $CONDA_PREFIX/bin/samtools view -@ {threads} -h -q {params.MAPQ_threshold} {input.source_bam} -o {output.bam_mapq_only}
 
-            $CONDA_PREFIX/bin/samtools sort -@ {threads} {output.bam_mapq_only} -o {output.bam_mapq_only_sorted}
+            if [[ "{params.paired_end}" == "True" ]]; then
+                # Paired-end: the MAPQ filter acts on single reads: when only one mate is removed, the other one stays as an
+                # orphan that still carries the old proper-pair flag and TLEN (R1 and R2 counts differ, MACS BAMPE and
+                # bamCoverage --extendReads treat the orphan as a full fragment). Mates are re-paired (collate + fixmate)
+                # and only proper pairs are kept. -F 2828 = unmapped, mate unmapped, secondary, QC-fail, supplementary.
+                # Streamed: no intermediate BAM is written (samtools temporary chunks are removed).
+                printf '\033[1;36m{params.sample}: keeping complete read pairs only...\\n\033[0m'
+                $CONDA_PREFIX/bin/samtools collate -@ {threads} -O -u {output.bam_mapq_only} 01_BAM_filtered/{params.sample}_collate_tmp | \
+                $CONDA_PREFIX/bin/samtools fixmate -@ {threads} -m -u - - | \
+                $CONDA_PREFIX/bin/samtools view -@ {threads} -u -f 2 -F 2828 - | \
+                $CONDA_PREFIX/bin/samtools sort -@ {threads} -T 01_BAM_filtered/{params.sample}_sort_tmp -o {output.bam_mapq_only_sorted} -
+                rm -f 01_BAM_filtered/{params.sample}_collate_tmp* 01_BAM_filtered/{params.sample}_sort_tmp*
+            else
+                $CONDA_PREFIX/bin/samtools sort -@ {threads} {output.bam_mapq_only} -o {output.bam_mapq_only_sorted}
+            fi
             $CONDA_PREFIX/bin/samtools index -@ {threads} -b {output.bam_mapq_only_sorted} {output.bam_mapq_only_sorted_index}
             """
 
@@ -1337,9 +1352,9 @@ if ((eval(str(config["bam_features"]["paired_end"])) == True)):
         input:
             target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
             target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-	        peaks = "04_Called_peaks/{TARGET}.filtered.BAMPE_peaks.xls"
+            peaks = "04_Called_peaks/{TARGET}.filtered.BAMPE_peaks.xls"
         output:
-	        qc = temp("05_Quality_controls_and_statistics/peaks_stats/{TARGET}.filtered.BAMPE_peaks.qc.txt")
+            qc = temp("05_Quality_controls_and_statistics/peaks_stats/{TARGET}.filtered.BAMPE_peaks.qc.txt")
         params:
             sample_config_table = config["workflow_configuration"]["sample_config_table"],
             peak_prefix = "04_Called_peaks/{TARGET}.filtered.BAMPE_peaks",
@@ -1421,9 +1436,9 @@ else:
         input:
             target_bam = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bam"])),
             target_bai = os.path.join("01_BAM_filtered", ''.join(["{TARGET}_mapq", str(config["bam_features"]["MAPQ_threshold"]), "_", DUP, "_sorted.bai"])),
-	        peaks = "04_Called_peaks/{TARGET}.filtered.BAM_peaks.xls"
+            peaks = "04_Called_peaks/{TARGET}.filtered.BAM_peaks.xls"
         output:
-	        qc = temp("05_Quality_controls_and_statistics/peaks_stats/{TARGET}.filtered.BAM_peaks.qc.txt")
+            qc = temp("05_Quality_controls_and_statistics/peaks_stats/{TARGET}.filtered.BAM_peaks.qc.txt")
         params:
             sample_config_table = config["workflow_configuration"]["sample_config_table"],
             peak_prefix = "04_Called_peaks/{TARGET}.filtered.BAM_peaks",
